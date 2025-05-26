@@ -1,28 +1,6 @@
 --[[
 
-=====================================================================
-==================== READ THIS BEFORE CONTINUING ====================
-=====================================================================
-========                                    .-----.          ========
-========         .----------------------.   | === |          ========
-========         |.-""""""""""""""""""-.|   |-----|          ========
-========         ||                    ||   | === |          ========
-========         ||   KICKSTART.NVIM   ||   |-----|          ========
-========         ||                    ||   | === |          ========
-========         ||                    ||   |-----|          ========
-========         ||:Tutor              ||   |:::::|          ========
-========         |'-..................-'|   |____o|          ========
-========         `"")----------------(""`   ___________      ========
-========        /::::::::::|  |::::::::::\  \ no mouse \     ========
-========       /:::========|  |==hjkl==:::\  \ required \    ========
-========      '""""""""""""'  '""""""""""""'  '""""""""""'   ========
-========                                                     ========
-=====================================================================
-=====================================================================
-
 What is Kickstart?
-
-  Kickstart.nvim is *not* a distribution.
 
   Kickstart.nvim is a starting point for your own configuration.
     The goal is that you can read every line of code, top-to-bottom, understand
@@ -37,21 +15,9 @@ What is Kickstart?
       - https://learnxinyminutes.com/docs/lua/
 
     After understanding a bit more about Lua, you can use `:help lua-guide` as a
-    reference for how Neovim integrates Lua.
-    - :help lua-guide
-    - (or HTML version): https://neovim.io/doc/user/lua-guide.html
+    reference for how Neovim integrates Lua (or HTML version): https://neovim.io/doc/user/lua-guide.html
 
 Kickstart Guide:
-
-  TODO: The very first thing you should do is to run the command `:Tutor` in Neovim.
-
-    If you don't know what this means, type the following:
-      - <escape key>
-      - :
-      - Tutor
-      - <enter key>
-
-    (If you already know the Neovim basics, you can skip this step.)
 
   Once you've completed that, you can continue working through **AND READING** the rest
   of the kickstart init.lua.
@@ -73,37 +39,110 @@ Kickstart Guide:
    NOTE: Look for lines like this
 
     Throughout the file. These are for you, the reader, to help you understand what is happening.
-    Feel free to delete them once you know what you're doing, but they should serve as a guide
-    for when you are first encountering a few different constructs in your Neovim config.
 
-If you experience any errors while trying to install kickstart, run `:checkhealth` for more info.
-
-I hope you enjoy your Neovim journey,
-- TJ
-
-P.S. You can delete this when you're done too. It's your config now! :)
 --]]
 
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
+
+-- disable netrw at the very start of your init.lua
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
+
+-- optionally enable 24-bit colour
+vim.opt.termguicolors = true
+
+-- not sure but we need it for the tree to work
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
+-- columnn marker
+vim.o.colorcolumn = '92'
+
+-- =============================================================================
 -- [[ Setting options ]]
+-- =============================================================================
+
 require 'options'
 
+-- =============================================================================
 -- [[ Basic Keymaps ]]
+-- =============================================================================
+
 require 'keymaps'
 
+-- =============================================================================
 -- [[ Install `lazy.nvim` plugin manager ]]
+-- =============================================================================
+
 require 'lazy-bootstrap'
 
+-- =============================================================================
 -- [[ Configure and install plugins ]]
+-- =============================================================================
+
 require 'lazy-plugins'
+
+-- -----------------------------------------------------------------------------
+-- nvim-tree
+-- -----------------------------------------------------------------------------
+
+-- setup with some options
+require('nvim-tree').setup {
+  sort = {
+    sorter = 'case_sensitive',
+  },
+  view = {
+    width = 30,
+  },
+  renderer = {
+    group_empty = true,
+  },
+  filters = {
+    dotfiles = true,
+  },
+}
+
+-- -----------------------------------------------------------------------------
+-- neogit
+-- -----------------------------------------------------------------------------
+
+require 'custom.plugins.neogit'
+
+-- -----------------------------------------------------------------------------
+-- julia
+-- -----------------------------------------------------------------------------
+
+require 'custom.plugins.julia-vim'
+
+-- Run Julia LSP
+require'lspconfig'.julials.setup{
+    on_new_config = function(new_config, _)
+        local julia = vim.fn.expand("~/.julia/environments/nvim-lspconfig/bin/julia")
+        if require'lspconfig'.util.path.is_file(julia) then
+        -- vim.notify("Hello!")
+            new_config.cmd[1] = julia
+        end
+    end
+}
+
+-- -----------------------------------------------------------------------------
+-- slime
+-- -----------------------------------------------------------------------------
+
+require('custom.plugins.vim-slime')
+
+vim.g.slime_target = 'tmux'
+-- vim.g.slime_default_config = {"socket_name" = "default", "target_pane" = "{last}"}
+vim.g.slime_default_config = {
+  -- Lua doesn't have a string split function!
+  socket_name = vim.api.nvim_eval('get(split($TMUX, ","), 0)'),
+  target_pane = '{top-right}',
+}
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
